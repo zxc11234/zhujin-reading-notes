@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>烛烬 · 摘录 | 马洛伊·山多尔</title>
+<meta name="description" content="马洛伊·山多尔《烛烬》读书摘录与评注。一夜将尽，烛火燃到最后一寸。">
+<style>
+/* ────────────────────────────────────────────────
+   烛烬 EMBERS — 单页阅读
+   主题锁定：night（夜） / dawn（黎明）两态，同一套语义变量
+   强调色全页唯一：ember（烛焰橙），两态各自校准对比度
+   圆角系统：全页 0（纸与铅字没有圆角），唯一例外是烛身
+   ──────────────────────────────────────────────── */
+
+:root {
+  --ember:        #e08a3e;
+  --ember-soft:   #c9762f;
+  --bg:           #0c0a09;
+  --bg-raise:     #131010;
+  --text:         #e6ddcd;
+  --text-dim:     #a2988a;
+  --text-faint:   #6b625a;
+  --rule:         rgba(230, 221, 205, .13);
+  --glow:         rgba(224, 138, 62, .16);
+  --measure:      36em;
+  --pad-x:        clamp(1.25rem, 6vw, 7rem);
+  --sect-y:       clamp(5rem, 13vh, 11rem);
+}
+
+:root[data-theme="dawn"] {
+  --ember:        #a8511a;
+  --ember-soft:   #8d451a;
+  --bg:           #e7e0d3;
+  --bg-raise:     #ded6c7;
+  --text:         #23201c;
+  --text-dim:     #5c554c;
+  --text-faint:   #8d857a;
+  --rule:         rgba(35, 32, 28, .16);
+  --glow:         rgba(168, 81, 26, .10);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", "STSong", Georgia, serif;
+  font-size: 17px;
+  line-height: 1.95;
+  letter-spacing: .015em;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .9s ease, color .9s ease;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--ember); color: var(--bg); }
+
+/* ── 环境光：烛焰在页面上投下的一团暖光，随主题变浓淡 ── */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(58vw 52vw at 88% 46%, var(--glow), transparent 62%),
+    radial-gradient(46vw 40vw at 6% 8%, var(--glow), transparent 66%);
+  opacity: .9;
+  transition: opacity .9s ease;
+}
+:root[data-theme="dawn"] .ambient { opacity: .7; }
+
+/* ── 纸面颗粒：固定层，不随滚动重绘 ── */
+.grain {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  opacity: .35; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+
+.wrap { position: relative; z-index: 1; }
+
+/* ════════ 导航：桌面单行，高度 64px ════════ */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.5rem);
+  height: 64px; padding: 0 var(--pad-x);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--rule);
+  /* 与 body 同步过渡，顺带迫使模糊层在换主题时重绘 */
+  transition: background-color .9s ease, border-color .9s ease;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .nav { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+.nav__mark {
+  font-size: 1.05rem; letter-spacing: .35em; margin-right: auto;
+  color: var(--text); text-decoration: none; white-space: nowrap;
+}
+.nav__links { display: flex; gap: clamp(.9rem, 2vw, 1.9rem); }
+.nav a.jump {
+  font-size: .82rem; letter-spacing: .12em; color: var(--text-dim);
+  text-decoration: none; white-space: nowrap;
+  transition: color .3s ease;
+}
+.nav a.jump:hover, .nav a.jump:focus-visible { color: var(--ember); }
+.themetoggle {
+  appearance: none; background: transparent; cursor: pointer;
+  border: 1px solid var(--rule); color: var(--text-dim);
+  font: inherit; font-size: .78rem; letter-spacing: .18em;
+  padding: .42rem .9rem; line-height: 1;
+  transition: color .3s ease, border-color .3s ease, transform .12s ease;
+}
+.themetoggle:hover { color: var(--ember); border-color: var(--ember); }
+.themetoggle:active { transform: translateY(1px); }
+.themetoggle:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+@media (max-width: 860px) { .nav__links { display: none; } }
+
+/* ════════ 蜡烛：右侧固定，蜡身高度 = 阅读进度的倒数 ════════ */
+.candle {
+  position: fixed; right: clamp(1.6rem, 3.4vw, 3.4rem); bottom: 0;
+  z-index: 40; width: 30px; height: 62vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  pointer-events: none;
+}
+.candle__body {
+  position: relative; width: 100%; height: 100%; transform-origin: bottom;
+  background: linear-gradient(100deg,
+      color-mix(in srgb, var(--text) 30%, transparent) 0%,
+      color-mix(in srgb, var(--text) 62%, transparent) 34%,
+      color-mix(in srgb, var(--text) 22%, transparent) 100%);
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 0 26px var(--glow);
+}
+/* 熔蜡：顶端不平整 */
+.candle__body::before {
+  content: ""; position: absolute; left: -3px; right: -3px; top: -6px; height: 12px;
+  background: color-mix(in srgb, var(--text) 46%, transparent);
+  border-radius: 50%;
+}
+/* 一道蜡泪 */
+.candle__body::after {
+  content: ""; position: absolute; left: -2px; top: 6px; width: 5px; height: 34px;
+  background: color-mix(in srgb, var(--text) 34%, transparent);
+  border-radius: 3px;
+}
+.candle__flame {
+  position: relative; width: 30px; height: 46px; margin: 0 auto -4px;
+}
+.candle__flame span {
+  position: absolute; left: 50%; bottom: 0; translate: -50% 0;
+  width: 15px; height: 34px;
+  background: radial-gradient(ellipse at 50% 72%,
+      #fff5d6 0%, var(--ember) 42%, var(--ember-soft) 66%, transparent 74%);
+  border-radius: 50% 50% 46% 46%;
+  filter: blur(.4px);
+}
+.candle__flame::after {
+  content: ""; position: absolute; left: 50%; bottom: -10px; translate: -50% 0;
+  width: 130px; height: 130px; border-radius: 50%;
+  background: radial-gradient(circle, var(--glow) 0%, transparent 66%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .candle__flame span { animation: flicker 3.1s ease-in-out infinite; }
+  @keyframes flicker {
+    0%, 100% { transform: scaleY(1)    scaleX(1);    opacity: 1;   }
+    28%      { transform: scaleY(1.13) scaleX(.92);  opacity: .93; }
+    46%      { transform: scaleY(.94)  scaleX(1.05); opacity: 1;   }
+    71%      { transform: scaleY(1.07) scaleX(.97);  opacity: .96; }
+  }
+}
+/* 滚动驱动：蜡身随阅读进度缩短，火焰跟着降下去 */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .candle__body {
+      animation: burn linear both;
+      animation-timeline: scroll(root block);
+    }
+    @keyframes burn { from { scale: 1 1; } to { scale: 1 .06; } }
+  }
+}
+@media (max-width: 1180px) { .candle { display: none; } }
+
+/* 窄屏进度：顶部一线 */
+.thinbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 55;
+  background: linear-gradient(90deg, var(--ember), var(--ember-soft));
+  transform-origin: 0 50%; scale: 0 1; display: none;
+}
+@supports (animation-timeline: scroll()) {
+  @media (max-width: 1180px) and (prefers-reduced-motion: no-preference) {
+    .thinbar { display: block; animation: fill linear both; animation-timeline: scroll(root block); }
+    @keyframes fill { to { scale: 1 1; } }
+  }
+}
+
+/* ════════ 序幕 ════════ */
+.hero {
+  min-height: calc(100dvh - 64px);
+  padding: clamp(2rem, 6vh, 5.5rem) var(--pad-x) clamp(2.5rem, 7vh, 6rem);
+  display: grid; align-content: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .78fr);
+  gap: clamp(1.5rem, 5vw, 5rem);
+}
+.hero__title {
+  margin: 0;
+  font-size: clamp(4.5rem, 19vw, 15rem);
+  line-height: .84; letter-spacing: .04em; font-weight: 500;
+}
+.hero__latin {
+  margin: clamp(1rem, 2.4vw, 2rem) 0 0;
+  font-size: clamp(.8rem, 1.5vw, 1rem);
+  letter-spacing: .62em; color: var(--ember); text-transform: uppercase;
+}
+.hero__by {
+  margin: clamp(1.6rem, 3.4vw, 2.6rem) 0 0;
+  font-size: clamp(.95rem, 1.5vw, 1.08rem); color: var(--text-dim);
+}
+.hero__by b { font-weight: 500; color: var(--text); }
+.hero__aside {
+  align-self: end; border-left: 1px solid var(--rule);
+  padding-left: clamp(1rem, 2.4vw, 2.2rem);
+  max-width: 26em;
+}
+.hero__aside p {
+  margin: 0; font-size: clamp(1rem, 1.35vw, 1.16rem);
+  color: var(--text-dim); line-height: 2.05;
+}
+.hero__aside p + p { margin-top: 1.1em; }
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; align-content: center; gap: 2.6rem; }
+  .hero__aside { align-self: start; }
+}
+
+/* ════════ 卷首 ════════ */
+.vol {
+  padding: var(--sect-y) var(--pad-x) clamp(2rem, 5vh, 4rem);
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  align-items: end; gap: clamp(1.2rem, 3vw, 3rem);
+  border-top: 1px solid var(--rule);
+}
+.vol__num {
+  font-size: clamp(4rem, 13vw, 10rem); line-height: .78; font-weight: 500;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--text) 40%, transparent);
+}
+.vol__name {
+  margin: 0 0 .35em; font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+  font-weight: 500; line-height: 1.25; letter-spacing: .06em;
+}
+.vol__note { margin: 0; color: var(--text-faint); font-size: .92rem; letter-spacing: .1em; }
+@media (max-width: 640px) {
+  .vol { grid-template-columns: 1fr; align-items: start; gap: .6rem; }
+}
+
+/* ════════ 摘录 ════════ */
+.piece {
+  padding: clamp(2.4rem, 6vh, 5rem) var(--pad-x);
+  display: grid; grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: clamp(.8rem, 2.4vw, 2.4rem);
+}
+.piece__page {
+  font-size: .78rem; letter-spacing: .12em; color: var(--text-faint);
+  padding-top: .9em; text-align: right; font-variant-numeric: tabular-nums;
+}
+.piece__body { max-width: min(100%, 52rem); }
+blockquote { margin: 0; }
+blockquote p { margin: 0; }
+blockquote p + p { margin-top: 1.15em; }
+
+/* 三种引文体量，按原文长短选用。em 宽度约等于每行汉字数 */
+.q-display {
+  max-width: 19em;
+  font-size: clamp(1.5rem, 3.5vw, 2.35rem);
+}
+.q-display p { font-size: 1em; line-height: 1.62; letter-spacing: .02em; font-weight: 500; }
+.q-mid {
+  max-width: 26em;
+  font-size: clamp(1.15rem, 1.9vw, 1.42rem);
+}
+.q-mid p { font-size: 1em; line-height: 1.85; }
+.q-long {
+  max-width: 34em;
+  font-size: clamp(1rem, 1.25vw, 1.1rem);
+}
+.q-long p { font-size: 1em; line-height: 2.15; color: var(--text); }
+
+.q-break {
+  display: block; margin-top: 1.4em;
+  font-size: clamp(1.25rem, 2.6vw, 1.85rem); line-height: 1.5;
+  color: var(--ember); font-weight: 500;
+}
+
+.piece__src {
+  margin: 1.6em 0 0; font-size: .82rem; letter-spacing: .1em;
+  color: var(--text-faint);
+}
+
+/* 评注：向右让出，靠一道细线区隔 */
+.gloss {
+  margin: clamp(1.8rem, 4vw, 3rem) 0 0 clamp(0rem, 5vw, 5rem);
+  padding-left: clamp(1rem, 2vw, 1.8rem);
+  border-left: 1px solid var(--ember);
+  max-width: 30em;
+}
+.gloss p { margin: 0; font-size: .98rem; line-height: 2.05; color: var(--text-dim); }
+.gloss p + p { margin-top: .9em; }
+@media (max-width: 640px) {
+  .piece { grid-template-columns: 1fr; gap: .5rem; }
+  .piece__page { text-align: left; padding-top: 0; }
+  .gloss { margin-left: 0; }
+}
+
+/* ════════ 间奏：整幅一行 ════════ */
+.interlude {
+  padding: clamp(5rem, 16vh, 12rem) var(--pad-x);
+  text-align: center;
+  background: var(--bg-raise);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.interlude p {
+  margin: 0 auto; max-width: 22em;
+  font-size: clamp(1.35rem, 3.6vw, 2.5rem); line-height: 1.7;
+  font-weight: 500; letter-spacing: .04em;
+}
+.interlude small {
+  display: block; margin-top: 2.4em;
+  font-size: .8rem; letter-spacing: .14em; color: var(--text-faint);
+}
+
+/* ════════ 尾声 ════════ */
+.finale {
+  padding: clamp(6rem, 18vh, 13rem) var(--pad-x) clamp(4rem, 10vh, 8rem);
+  border-top: 1px solid var(--rule);
+  text-align: center;
+}
+.finale__q {
+  margin: 0 auto; max-width: 30em;
+  font-size: clamp(1.2rem, 2.3vw, 1.6rem); line-height: 1.95;
+}
+.finale__src { margin: 2em 0 0; font-size: .82rem; letter-spacing: .1em; color: var(--text-faint); }
+.finale__gloss {
+  margin: clamp(3rem, 7vw, 5rem) auto 0; max-width: 34em; text-align: left;
+  padding-top: clamp(2rem, 4vw, 3rem); border-top: 1px solid var(--rule);
+}
+.finale__gloss p { margin: 0; color: var(--text-dim); font-size: 1rem; line-height: 2.1; }
+.finale__gloss p + p { margin-top: 1.3em; color: var(--text); }
+.finale__last {
+  margin: clamp(4rem, 9vw, 7rem) 0 0;
+  font-size: clamp(1.6rem, 4.5vw, 3rem); letter-spacing: .28em;
+  color: var(--ember); font-weight: 500;
+}
+
+/* ════════ 页脚 ════════ */
+.foot {
+  padding: clamp(2.5rem, 6vh, 4rem) var(--pad-x) clamp(3.5rem, 8vh, 6rem);
+  border-top: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; gap: 1rem clamp(1.5rem, 5vw, 4rem);
+  align-items: baseline;
+  font-size: .84rem; letter-spacing: .08em; color: var(--text-faint);
+}
+.foot__stars { color: var(--ember); letter-spacing: .2em; }
+.foot__top {
+  margin-left: auto; color: var(--text-dim); text-decoration: none;
+  border-bottom: 1px solid var(--rule); padding-bottom: .2em;
+  transition: color .3s ease, border-color .3s ease;
+}
+.foot__top:hover { color: var(--ember); border-color: var(--ember); }
+
+/* ════════ 入场：滚动到视野内淡入上浮 ════════ */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { opacity: 0; transform: translateY(26px); }
+  .rise.seen {
+    opacity: 1; transform: none;
+    transition: opacity .95s cubic-bezier(.16,1,.3,1), transform .95s cubic-bezier(.16,1,.3,1);
+  }
+}
+
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 4px; }
+</style>
+</head>
+<body>
+
+<div class="ambient" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="thinbar" aria-hidden="true"></div>
+
+<div class="candle" aria-hidden="true">
+  <div class="candle__flame"><span></span></div>
+  <div class="candle__body"></div>
+</div>
+
+<div class="wrap">
+
+  <nav class="nav">
+    <a class="nav__mark" href="#top">烛烬</a>
+    <div class="nav__links">
+      <a class="jump" href="#vol-1">接受</a>
+      <a class="jump" href="#vol-2">友谊</a>
+      <a class="jump" href="#vol-3">激情</a>
+      <a class="jump" href="#vol-4">命运</a>
+      <a class="jump" href="#vol-5">不可言说</a>
+    </div>
+    <button class="themetoggle" id="theme" type="button" aria-live="polite">点起灯</button>
+  </nav>
+
+  <!-- ═══ 序幕 ═══ -->
+  <header class="hero" id="top">
+    <div>
+      <h1 class="hero__title">烛烬</h1>
+      <p class="hero__latin">A Gyertyák Csonkig Égnek</p>
+      <p class="hero__by">马洛伊·山多尔 &nbsp;<b>Sándor Márai</b></p>
+    </div>
+    <div class="hero__aside">
+      <p>一八九九年的那个夏天之后，两个人隔了四十一年再次同桌。城堡里点起蜡烛，晚餐冷掉，谈话一直进行到烛芯烧到底座。</p>
+      <p>下面是二十则摘录，按主题分作五卷。每一则后面是我读到它时想到的。</p>
+    </div>
+  </header>
+
+  <!-- ═══ 卷一 ═══ -->
+  <section class="vol rise" id="vol-1">
+    <div class="vol__num">壹</div>
+    <div>
+      <h2 class="vol__name">我们不得不接受</h2>
+      <p class="vol__note">四则</p>
+    </div>
+  </section>
+
+  <article class="piece rise">
+    <div class="piece__page">p.36</div>
+    <div class="piece__body">
+      <blockquote class="q-display">
+        <p>这是人类应该面对的挑战。人们总有一天要失去他们自己的所爱，不能忍受这点的人不值得可怜，因为他不是完整的人。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 36 页</p>
+      <div class="gloss">
+        <p>尼采提出「永恒轮回」，这意味着生命的一切痛苦与欢乐我们都要接受。生活是不留余地的。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.42</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>二十二年里，他（他的父亲）从不旅游，从不买一件多余的衣裳，从不外出避暑，因为他们想把我打造成一件杰作，将我塑造成他们在自己的生活中未能成为的那种人。有时我想做些什么，但是我的手却停在空中，我总是想到这份责任。我甚至希望它们死去。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 42 页</p>
+      <div class="gloss">
+        <p>人生最难的境地，是生命不属于自己的时候。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.131</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>那些面对命运的宽恕而不懂得谦虚的人会变得自负、轻佻和傲慢，而那些始终沉湎于被宽恕的状态而不懂得将上帝的礼物用于日常生活的人则会失败。世界只会宽恕那些内心谦逊、卑躬的人，宽恕短暂的一小段时光……</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 131 页</p>
+      <div class="gloss">
+        <p>战战兢兢、如履薄冰。越安逸、越满足的时候越要想到这一点：命运在最平静时最该被提防。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.157</div>
+    <div class="piece__body">
+      <blockquote class="q-long">
+        <p>言语能跟生活现实完全相符的人十分罕见，也许是生活中最罕见的现象。我这里指的不是谎言，不是卑鄙，我指的是人们白白了解真相，白白积累经验，但仍不能改变他们的天性。也许在生活中，我们对此只能听其自然，不可能像对待智慧和谨慎那样对这类不可复制的现实进行调整，不可能改变一个人的天性以适应现实。我们能做的只有这些，即便如此，我们也不会变得更智慧、更威严，不会……</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 157 页</p>
+      <div class="gloss">
+        <p>世间遗憾与无奈。</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 卷二 ═══ -->
+  <section class="vol rise" id="vol-2">
+    <div class="vol__num">贰</div>
+    <div>
+      <h2 class="vol__name">友谊是一座无言的碑</h2>
+      <p class="vol__note">三则</p>
+    </div>
+  </section>
+
+  <article class="piece rise">
+    <div class="piece__page">p.106</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>我父亲认为，人们习惯将友谊想象成一种义务。跟爱情一样，朋友也不会因为自己投入的情感而要求回报，既不期望报答，也不把自己选作朋友的人视为不可思议的生灵，应该了解对方的毛病并承担全部后果。这才该是理想。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 106 页</p>
+      <div class="gloss">
+        <p>朋友就是我们认清这个人的优点和缺点后，还愿意跟他做朋友。与亲情相比，这种关系更加主动；与爱情相比，这种关系更加轻盈。无责任、无所求，正是在生命之重与轻之间的最佳缓冲。</p>
+        <p>但这也意味着，选择一位朋友，我们便承担了无限责任，因为我们再没有理由推脱。你有选择，且不需要对方承担责任。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.108</div>
+    <div class="piece__body">
+      <blockquote class="q-display">
+        <p>一个人可以做出不忠、卑鄙乃至杀人之类更坏的事情而仍然未失内心的纯洁。行为还不是真相，毕竟只是后果而已。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 108 页</p>
+      <div class="gloss">
+        <p>当你越了解一个人，越理解一个人，越容易原谅他。因为一切事出有因，哪怕是主观的，你也会觉得这不是他的错，是生活、是家庭、是境遇、是不幸，是人生的种种。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.135</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>它比男人和女人怀着绝望的冲动相互追逐的激情还要强烈。友谊不含欺骗，因为双方彼此均无所求。朋友可以被杀掉，但两个人从少年时代就缔结的友谊是杀不掉的，直到生命结束也不可能被扼杀。记忆继续活在人的意识里，就像一块无言的英雄纪念碑。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 135 页</p>
+      <div class="gloss">
+        <p>这本书的很多内容需要回过头看才能有更深的体会。就跟友谊一样，回过头去看，曾经的友谊俨然已经成为一座纪念碑，虽然沧桑变换、物是人非，但那段感情始终在那里，在记忆中。</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 卷三 ═══ -->
+  <section class="vol rise" id="vol-3">
+    <div class="vol__num">叁</div>
+    <div>
+      <h2 class="vol__name">激情是最绝望的那一种</h2>
+      <p class="vol__note">四则</p>
+    </div>
+  </section>
+
+  <article class="piece rise">
+    <div class="piece__page">p.121</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>对我们来说，杀戮是法律和道德问题，或是医学问题。不管怎样，都会有什么予以批准或禁止，属于一个庞大道德与法律体系逐条逐款精确规定的特殊事物。我们也杀戮，只是更加复杂。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 121 页</p>
+      <div class="gloss">
+        <p>社会的进步从来没有改变「吃人」的事实，只是改变了吃人的方式。我们越来越优雅地吃人。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.127</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>因为激情不能用理性的词汇表述。激情根本不在乎从他人那里得到什么，只想表达自己，只想将自己的意愿强加给他人，哪怕得不到任何类似温情、礼貌、友谊或耐心的回报。最强烈的激情总是最绝望的，否则就不是激情了，而是讨价还价、随机应变或不温不火的价值交换。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 127 页</p>
+      <div class="gloss">
+        <p>激情是最具毁灭性的情感，因为它不惜一切代价，只为实现自己的情感目标。野心家毁灭世界，艺术家毁灭自己。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.167</div>
+    <div class="piece__body">
+      <blockquote class="q-long">
+        <p>有的时候，我几乎相信世界上只存在这两类人，每类都是另类性的变种。阶层划分、世界观、权利等级，一切都是另类性造成的结果。只有属于同种血缘的人们，才能在危难关头相互帮助，才能将自己的血液捐给与自己血型相同的人。心灵也只有在不是另类的情况下，在其态度比信赖还要隐秘真实的情况下，才能帮助另一个心灵。</p>
+        <p>因为无论在生活的何种情况和境遇下，你们总是喜欢另类，总是寻找另类，你知道吗？让两类人相遇是生活最大的秘密和礼物。这是多么罕见，似乎大自然的力量和伎俩总是不遗余力、千方百计地阻碍这种亲和——也许，世界的造化和生命的更新需要一种相互寻找的应激状态，而这种应激状态产生于愿望和节奏截然相反的人们之间……在两类人的背后，有多少绝望和盲目的希望啊！</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 167 至 168 页</p>
+      <div class="gloss">
+        <p>飞蛾扑火，在所不辞，哪怕是面对注定的死亡命运。所以，生命是向死而生的。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.205</div>
+    <div class="piece__body">
+      <blockquote class="q-display">
+        <p>你是否也这样认为：生命的内容不是别的，而是那股有一天打动了我们的内心和灵魂之后，永远燃烧到死的激情。</p>
+        <p class="q-break">「你为什么要问？」对方平静地说，「你很清楚，是这样的。」</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 205 至 206 页</p>
+      <div class="gloss">
+        <p>生活是这样的。</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 间奏 ═══ -->
+  <section class="interlude rise">
+    <p>厄运从我们敞开的房门跨进来，是我们将厄运请到自己跟前。</p>
+    <small>第 164 页</small>
+  </section>
+
+  <!-- ═══ 卷四 ═══ -->
+  <section class="vol rise" id="vol-4">
+    <div class="vol__num">肆</div>
+    <div>
+      <h2 class="vol__name">人跟命运相互创造</h2>
+      <p class="vol__note">四则</p>
+    </div>
+  </section>
+
+  <article class="piece rise">
+    <div class="piece__page">p.128</div>
+    <div class="piece__body">
+      <blockquote class="q-long">
+        <p>但是在你的内心深处，有种纠结的冲动，让你感到紧张、焦虑。那是一种欲望，一种想成为与自己不同的其他人的欲望。这是命运对人最大的打击。欲望，成为他人，成为我们这样的人的欲望：没有什么欲望会比欲望成为他人更灼痛人心，因为一个人不可能成为其他人而活着。</p>
+        <p>我们不得不接受自己对自己和世界而言的现实存在。我们不得不接受你是那类人，我们是这类人。我们不得不懂得并且接受：我们不会因为智慧而从生活那里获得赞赏和嘉奖。我们不懂得并且接受自己虚荣、自私、秃顶或有啤酒肚——是的，我们不得不懂得，我们不会因为任何东西获得嘉奖或赞赏。</p>
+        <p>我们不得不接受自己的性格和天性，即使经验和才智也不能改变我们身上的缺陷、私心和贪婪。我们不得不接受我们的欲望在这个世界上不会有彻底的回声。我们不得不接受这个现实：我们所爱的人并不爱我们，或者并不像我们所希望的那样爱我们。我们不得不接受背叛和不忠，这是人类最难完成的重任之一。我们不得不接受另外一个人在性格或思想上的出类拔萃。我在这里，在山林之中，花了七十三个春秋才学会了这个。</p>
+        <p class="q-break">但是，你不能接受这一切。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 128 至 129 页</p>
+      <div class="gloss">
+        <p>To be or not to be, that is the question.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.164</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>人自己也制造发生在自己身上的事。人制造了应该发生在自己身上的事后，又守在身边不肯放走。人就是这样，即使他在开始的一刻就立刻感到并且知道自己所做的事情是致命的，但他还是照做不误。人跟命运相互依存，相互召唤，相互创造。「厄运无缘无故闯进我们生活」的说法是不对的。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 164 页</p>
+      <div class="gloss">
+        <p>从现在看过去，一切都有迹可循。只不过当时我们茫然无知、一往无前。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.174</div>
+    <div class="piece__body">
+      <blockquote class="q-display">
+        <p>一个活下来的人没有权利提出指控。一个人经历了什么并活了下来，本身就已经打赢了官司。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 174 页</p>
+      <div class="gloss">
+        <p>生活是一场持续不断的庭审，唯有死亡是落锤的时刻。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.176</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>人的天性就是这样强大，不能作为另一个人活着。要对他所认为的「生活的真正问题」予以回答或得到答案。所以你回到这里，所以我等你回来。也许这个世界的末日到了。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 176 页</p>
+      <div class="gloss">
+        <p>「我们为自己创造事实的构象，关于事实的逻辑构象就是思想。」</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 卷五 ═══ -->
+  <section class="vol rise" id="vol-5">
+    <div class="vol__num">伍</div>
+    <div>
+      <h2 class="vol__name">真正的秘密无法言说</h2>
+      <p class="vol__note">四则，与一个吻</p>
+    </div>
+  </section>
+
+  <article class="piece rise">
+    <div class="piece__page">p.153</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>后来过了许多年，直到克里斯蒂娜去世后，我才明白，只有那些知道自己的生活中有一日将有什么事情需要表白的人，才会这样忧虑不安地为自白、为最后的真诚做准备。</p>
+        <p>我过了很多年才明白，她之所以这样投入真诚，是因为担心有一天自己的生活中会充满不能与我分享的秘密，而真正的秘密是无法记述、无法言说的。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 153 至 154 页</p>
+      <div class="gloss">
+        <p>大悲伤。生活的不幸尽数来源于此。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.185</div>
+    <div class="piece__body">
+      <blockquote class="q-long">
+        <p>有的东西能让人如此痛苦，受伤、焚烧，或许连死亡也不能解脱它：比如一个人或两个人伤害了我们心底的自尊，一旦失掉这种自尊，我们再不能作为一个人活下去。你会说那是虚荣。是的，是虚荣。不管怎样，这种自尊始终是人类生命最深刻的内容。</p>
+        <p>因此我害怕这个秘密，因此我们使用各种各样的解决方式，包括卑劣懦弱的解决方式：一个远走他乡，丢下他的所爱之人，因为害怕秘密；另一个则守口如瓶地留了下来，永远等待某种回答。我看到的就是这个，我经历的就是这个。这不是懦弱，不是，这是生命本能的最后防卫。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 185 页</p>
+      <div class="gloss">
+        <p>情感是人类的最大天赋，也是人类的最大毒药。它让我们敞开心扉，同时让我们兵戈相向。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.187</div>
+    <div class="piece__body">
+      <blockquote class="q-mid">
+        <p>因为你看，死者的回答是最好的，终极而永久。有的时候我这样觉得，只有死者才能回答得最好、最完整。事实就是这样，八年之后，他除了死亡还能说些什么？人死之后不能再讲话，他用死亡回答了所有的问题。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 187 页</p>
+      <div class="gloss">
+        <p>死亡是不接受反驳的终极回答，一锤定音。人们不愿意接受别人自杀，是因为这种行为会引发身边人强烈的内疚，而这种内疚无法消除，再没有人可以解释或者宽恕你了。</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="piece rise">
+    <div class="piece__page">p.204</div>
+    <div class="piece__body">
+      <blockquote class="q-display">
+        <p>我们活过了一个我们很爱的人，为了她，我们甚至曾想杀人；我们活过了一个跟我们很亲密的人，为了她，我们差一点丧命。这本身就是生活神秘而残酷的罪行之一。</p>
+      </blockquote>
+      <p class="piece__src">马洛伊·山多尔《烛烬》第 204 页</p>
+      <div class="gloss">
+        <p>交织而讽刺，这就是生活。</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 尾声 ═══ -->
+  <section class="finale rise">
+    <blockquote class="finale__q">
+      <p>乳娘挺直身子，用那只肤色枯黄、瘦骨嶙峋的小手在老将军的额头画了个十字。他们相互吻别，这个吻反常、短促、特别：有谁看到，肯定会微笑。但是如同所有人类的吻，这也是回答，以其怪异而温柔的方式回答一个难以言表的问题。</p>
+    </blockquote>
+    <p class="finale__src">马洛伊·山多尔《烛烬》第 208 页</p>
+
+    <div class="finale__gloss">
+      <p>作品在老将军长篇大论十几个章节之后，在这里迎来尾声。这十几个章节里，将军一直在向老友追寻当年的真相，充斥着长篇大论的话语。但是在结尾，一个吻道清了所有答案。有的时候千言万语赶不上一个动作，因为言语的表达是有界限的，而吻没有，它富含的意义是无穷的。</p>
+      <p>生活尽在不可言说当中。</p>
+    </div>
+
+    <p class="finale__last">烛已成烬</p>
+  </section>
+
+  <footer class="foot">
+    <span>阅读于 2026 年 7 月 23 日至 8 月 3 日</span>
+    <span class="foot__stars" title="四星">★★★★☆</span>
+    <span>二十则摘录</span>
+    <a class="foot__top" href="#top">回到开头</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn  = document.getElementById('theme');
+  var LABEL = { night: '点起灯', dawn: '吹熄它' };
+
+  var saved = null;
+  try { saved = localStorage.getItem('embers-theme'); } catch (e) {}
+  if (saved === 'dawn' || saved === 'night') setTheme(saved);
+
+  function setTheme(t) {
+    root.setAttribute('data-theme', t);
+    btn.textContent = LABEL[t];
+    btn.setAttribute('aria-label', t === 'night' ? '切换到黎明配色' : '切换到夜晚配色');
+    try { localStorage.setItem('embers-theme', t); } catch (e) {}
+  }
+
+  btn.addEventListener('click', function () {
+    setTheme(root.getAttribute('data-theme') === 'night' ? 'dawn' : 'night');
+  });
+  setTheme(root.getAttribute('data-theme'));
+
+  // 入场：只做一次，IntersectionObserver，不监听 scroll
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var targets = document.querySelectorAll('.rise');
+  if (reduce || !('IntersectionObserver' in window)) {
+    targets.forEach(function (el) { el.classList.add('seen'); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('seen');
+      io.unobserve(entry.target);
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+  targets.forEach(function (el) { io.observe(el); });
+})();
+</script>
+
+</body>
+</html>
