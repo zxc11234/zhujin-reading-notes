@@ -24,6 +24,8 @@
   --rule:         rgba(230, 221, 205, .13);
   --glow:         rgba(224, 138, 62, .16);
   --measure:      36em;
+  --candle-h:     62vh;   /* 蜡烛满高 */
+  --burn:         .94;    /* 烧掉的比例，火焰与光的下移量 = 满高 × 此值 */
   --pad-x:        clamp(1.25rem, 6vw, 7rem);
   --sect-y:       clamp(5rem, 13vh, 11rem);
 }
@@ -63,9 +65,8 @@ body {
 /* ── 环境光：烛焰在页面上投下的一团暖光，随主题变浓淡 ── */
 .ambient {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(58vw 52vw at 88% 46%, var(--glow), transparent 62%),
-    radial-gradient(46vw 40vw at 6% 8%, var(--glow), transparent 66%);
+  /* 只留左上一片余光，右侧的主光源交给随火焰下移的 .candleglow */
+  background: radial-gradient(46vw 40vw at 6% 8%, var(--glow), transparent 66%);
   opacity: .9;
   transition: opacity .9s ease;
 }
@@ -121,12 +122,11 @@ body {
 /* ════════ 蜡烛：右侧固定，蜡身高度 = 阅读进度的倒数 ════════ */
 .candle {
   position: fixed; right: clamp(1.6rem, 3.4vw, 3.4rem); bottom: 0;
-  z-index: 40; width: 30px; height: 62vh;
-  display: flex; flex-direction: column; justify-content: flex-end;
+  z-index: 40; width: 30px; height: var(--candle-h);
   pointer-events: none;
 }
 .candle__body {
-  position: relative; width: 100%; height: 100%; transform-origin: bottom;
+  position: absolute; inset: 0; transform-origin: bottom;
   background: linear-gradient(100deg,
       color-mix(in srgb, var(--text) 30%, transparent) 0%,
       color-mix(in srgb, var(--text) 62%, transparent) 34%,
@@ -146,8 +146,9 @@ body {
   background: color-mix(in srgb, var(--text) 34%, transparent);
   border-radius: 3px;
 }
+/* 火焰坐在蜡身顶端（容器顶边之上），随燃烧向下平移 */
 .candle__flame {
-  position: relative; width: 30px; height: 46px; margin: 0 auto -4px;
+  position: absolute; left: 0; right: 0; bottom: 100%; height: 46px;
 }
 .candle__flame span {
   position: absolute; left: 50%; bottom: 0; translate: -50% 0;
@@ -171,17 +172,43 @@ body {
     71%      { transform: scaleY(1.07) scaleX(.97);  opacity: .96; }
   }
 }
-/* 滚动驱动：蜡身随阅读进度缩短，火焰跟着降下去 */
+/* 滚动驱动：蜡身缩短，火焰与它照出的那团光沿同一时间轴等距下移 */
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
-    .candle__body {
-      animation: burn linear both;
+    .candle__body, .candle__flame, .candleglow {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
       animation-timeline: scroll(root block);
     }
-    @keyframes burn { from { scale: 1 1; } to { scale: 1 .06; } }
+    .candle__body  { animation-name: burn; }
+    .candle__flame { animation-name: descend; }
+    .candleglow    { animation-name: descend; }
+    @keyframes burn    { to { scale: 1 calc(1 - var(--burn)); } }
+    @keyframes descend { to { translate: 0 calc(var(--candle-h) * var(--burn)); } }
   }
 }
-@media (max-width: 1180px) { .candle { display: none; } }
+/* 火焰照出的主光源：锚在火焰上，跟着一起降 */
+.candleglow {
+  position: fixed; z-index: 0; pointer-events: none;
+  right: clamp(1.6rem, 3.4vw, 3.4rem); bottom: var(--candle-h);
+  width: 0; height: 0;
+}
+.candleglow::before {
+  content: ""; position: absolute; left: 15px; bottom: 23px;
+  width: 72vw; height: 72vw; max-width: 980px; max-height: 980px;
+  translate: -50% 50%;
+  background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
+}
+
+@media (max-width: 1180px) {
+  .candle, .candleglow { display: none; }
+  /* 窄屏没有蜡烛，把右侧那片光还给静态环境光 */
+  .ambient {
+    background:
+      radial-gradient(58vw 52vw at 88% 28%, var(--glow), transparent 62%),
+      radial-gradient(46vw 40vw at 6% 8%, var(--glow), transparent 66%);
+  }
+}
 
 /* 窄屏进度：顶部一线 */
 .thinbar {
@@ -287,7 +314,8 @@ blockquote p + p { margin-top: 1.15em; }
 }
 .q-long p { font-size: 1em; line-height: 2.15; color: var(--text); }
 
-.q-break {
+/* 选择器需压过 .q-display p / .q-long p，否则断句会被吞成正文 */
+blockquote p.q-break {
   display: block; margin-top: 1.4em;
   font-size: clamp(1.25rem, 2.6vw, 1.85rem); line-height: 1.5;
   color: var(--ember); font-weight: 500;
@@ -388,9 +416,11 @@ blockquote p + p { margin-top: 1.15em; }
 <div class="grain" aria-hidden="true"></div>
 <div class="thinbar" aria-hidden="true"></div>
 
+<div class="candleglow" aria-hidden="true"></div>
+
 <div class="candle" aria-hidden="true">
-  <div class="candle__flame"><span></span></div>
   <div class="candle__body"></div>
+  <div class="candle__flame"><span></span></div>
 </div>
 
 <div class="wrap">
